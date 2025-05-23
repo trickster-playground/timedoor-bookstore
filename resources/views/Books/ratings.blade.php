@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md mt-10 ">
-    <h1 class="text-3xl font-bold mb-6 text-center">Input Rating</h1>
+    <h1 class="text-3xl font-bold mb-6 text-center text-blue-500">Input Rating</h1>
 
     @if(session('success'))
         <div class="alert alert-success mb-4">

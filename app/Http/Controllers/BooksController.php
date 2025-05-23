@@ -10,34 +10,34 @@ use Illuminate\Support\Facades\DB;
 
 class BooksController extends Controller
 {
+
+  const ALLOWED_LIMITS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
   public function index(Request $request)
   {
     // input filter search dan jumlah data yang ingin ditampilkan
     $search = $request->input('search');
-    $limit = $request->input('limit', 10); // default 10
+    $limit = (int) $request->input('limit', 10); // default 10
 
     // Validasi limit input
-    $allowedLimits = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-    if (!in_array((int)$limit, $allowedLimits)) {
+    if (!in_array($limit, self::ALLOWED_LIMITS)) {
       $limit = 10;
     }
 
-    // Query untuk mendapatkan buku beserta rata-rata rating dan jumlah voter
-    $books = Book::select(
-      'books.*',
-      DB::raw('COALESCE(AVG(ratings.rating), 0) as avg_rating'),
-      DB::raw('COUNT(ratings.id) as voters_count')
-    )
+    // Query untuk mendapatkan buku beserta rata-rata rating dan jumlah voter  
+    $books = Book::with('author') // eager load author
+      ->select('books.*')
       ->leftJoin('ratings', 'books.id', '=', 'ratings.book_id')
       ->leftJoin('authors', 'authors.id', '=', 'books.author_id')
       ->when($search, function ($query, $search) {
         $query->where('books.title', 'like', "%{$search}%")
           ->orWhere('authors.name', 'like', "%{$search}%");
       })
+      ->selectRaw('COALESCE(AVG(ratings.rating), 0) as avg_rating')
+      ->selectRaw('COUNT(ratings.id) as voters_count')
       ->groupBy('books.id')
       ->orderByDesc('avg_rating')
-      ->limit($limit)
-      ->get();
+      ->paginate($limit);
 
     return view('books.index', compact('books', 'search', 'limit'));
   }
@@ -57,12 +57,12 @@ class BooksController extends Controller
 
   public function createRating()
   {
-    $authors = Author::all();
+    $authors = Author::with('books:id,title,author_id')->get();
 
     // Buat array booksByAuthor: key author_id, value koleksi buku author tsb
     $booksByAuthor = [];
     foreach ($authors as $author) {
-      $booksByAuthor[$author->id] = $author->books()->select('id', 'title')->get();
+      $booksByAuthor[$author->id] = $author->books;
     }
 
     return view('books.ratings', compact('authors', 'booksByAuthor'));
@@ -76,19 +76,19 @@ class BooksController extends Controller
       'rating' => 'required|integer|min:1|max:10',
     ]);
 
-    // Validasi buku harus milik author yang dipilih
     $book = Book::findOrFail($request->book_id);
     if ($book->author_id != $request->author_id) {
-      return back()->withErrors(['book_id' => 'The selected book does not belong to the selected author.'])->withInput();
+      return back()->withErrors([
+        'book_id' => 'The selected book does not belong to the selected author.'
+      ])->withInput();
     }
 
-    // Simpan rating
     Rating::create([
       'book_id' => $request->book_id,
       'rating' => $request->rating,
     ]);
 
-    // Redirect ke halaman list buku (index)
-    return redirect()->route('books.index')->with('success', 'Rating submitted successfully!');
+    return redirect()->route('books.index')
+      ->with('success', 'Rating submitted successfully!');
   }
 }
