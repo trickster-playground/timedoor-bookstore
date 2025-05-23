@@ -21,7 +21,7 @@ Aplikasi ini merupakan sistem manajemen buku berbasis Laravel 10 dan MySQL, yang
 1. **Kloning Repositori**
 
    ```bash
-   git clone https://github.com/username/timedoor-bookstore.git
+   git clone https://github.com/trickster-playground/timedoor-bookstore.git
    cd timedoor-bookstore
 
 2. **Instalasi Dependensi**
