@@ -53,7 +53,7 @@ Aplikasi ini merupakan sistem manajemen buku berbasis Laravel 10 dan MySQL, yang
    ```bash
    php artisan key:generate
 
-5. **Migrasi dan Seeder Database**
+5. **Migrasi dan Seeder Database** atau **Import file SQL yang terdapat pada Root Folder (timedoor_bookstore.sql)**
 
    ```bash
    php artisan migrate --seed
