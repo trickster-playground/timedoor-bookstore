@@ -17,8 +17,15 @@ class RatingFactory extends Factory
    */
   public function definition(): array
   {
+    static $bookIds = null;
+
+    // Ambil semua ID buku sekali
+    if ($bookIds === null) {
+      $bookIds = Book::pluck('id')->all();
+    }
+
     return [
-      'book_id' => Book::inRandomOrder()->first()->id ?? Book::factory(),
+      'book_id' => fake()->randomElement($bookIds),
       'rating' => $this->faker->numberBetween(1, 10),
     ];
   }
