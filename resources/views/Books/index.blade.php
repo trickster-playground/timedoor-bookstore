@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="max-w-6xl mx-auto px-4 py-6">
+    <div class="max-w-6xl mx-auto px-4 py-6" x-data="{ loading: false }">
         @if (session('success'))
             <div class="alert alert-success mb-4">
                 {{ session('success') }}
@@ -9,7 +9,7 @@
         @endif
         <h1 class="text-3xl font-bold mb-6 text-center">📚 List of Books</h1>
 
-        <form method="GET" action="{{ route('books.index') }}" class="mb-6">
+        <form method="GET" action="{{ route('books.index') }}" class="mb-6" @submit="loading = true">
             <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
                 <input type="text" name="search" placeholder="Search by book or author" value="{{ request('search') }}"
                     class="input input-outline input-primary w-full sm:max-w-xs" />
@@ -22,7 +22,16 @@
                     @endforeach
                 </select>
 
-                <button type="submit" class="btn btn-primary w-full sm:w-auto">Search</button>
+                <button type="submit" class="btn btn-primary w-full sm:w-auto" :disabled="loading">
+                    <template x-if="loading">
+                        <svg class="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                    </template>
+                    <span x-text="loading ? 'Loading...' : 'Search'"></span></button>
             </div>
         </form>
 
@@ -57,8 +66,9 @@
                 </tbody>
             </table>
         </div>
-        <div class="mt-6 text-white">
+        <div class="mt-6 text-white" :class="{ 'opacity-50 pointer-events-none': loading }">
             {{ $books->appends(request()->query())->links() }}
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 @endsection

@@ -30,8 +30,8 @@ class BooksController extends Controller
       ->leftJoin('ratings', 'books.id', '=', 'ratings.book_id')
       ->leftJoin('authors', 'authors.id', '=', 'books.author_id')
       ->when($search, function ($query, $search) {
-        $query->where('books.title', 'like', "%{$search}%")
-          ->orWhere('authors.name', 'like', "%{$search}%");
+        $query->whereRaw("MATCH(books.title) AGAINST(? IN BOOLEAN MODE)", [$search])
+          ->orWhereRaw("MATCH(authors.name) AGAINST(? IN BOOLEAN MODE)", [$search]);
       })
       ->selectRaw('COALESCE(AVG(ratings.rating), 0) as avg_rating')
       ->selectRaw('COUNT(ratings.id) as voters_count')
@@ -59,11 +59,9 @@ class BooksController extends Controller
   {
     $authors = Author::with('books:id,title,author_id')->get();
 
-    // Buat array booksByAuthor: key author_id, value koleksi buku author tsb
-    $booksByAuthor = [];
-    foreach ($authors as $author) {
-      $booksByAuthor[$author->id] = $author->books;
-    }
+    $booksByAuthor = $authors->mapWithKeys(fn($author) => [
+      $author->id => $author->books
+    ]);
 
     return view('books.ratings', compact('authors', 'booksByAuthor'));
   }
